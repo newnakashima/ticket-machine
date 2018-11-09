@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>券売機</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <style>
+    #content {
+      width: 80%;
+      margin: auto;
+      text-align: center;
+    }
+    .machine {
+      width: 20%;
+    }
+    li {
+      list-style: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="content">
+    <h1 class="header">券売機</h1>
+    <img class="machine" src="./images/ticket_kenbaiki.png" alt="券売機">
+    <div class="input-form">
+      <form action="#">
+        <div id="10-input">
+          <label for="10">10円</label>
+          <input id="10" v-model="input_money.m10" type="number" min="0" :max="left_money.m10">
+          枚
+        </div>
+        <div class="money-input">
+          <label for="50">50円</label>
+          <input id="50" v-model="input_money.m10" type="number" min="0" :max="left_money.m10">
+          枚
+        </div>
+        <div class="money-input">
+          <label for="100">100円</label>
+          <input id="100" v-model="input_money.m100" type="number" min="0" :max="left_money.m100">
+          枚
+        </div>
+        <div class="money-input">
+          <label for="500">500円</label>
+          <input id="500" v-model="input_money.m500" type="number" min="0" :max="left_money.m500">
+          枚
+        </div>
+        <div class="money-input">
+          <label for="1000">1000円</label>
+          <input id="1000" v-model="input_money.m1000" type="number" min="0" :max="left_money.m1000">
+          枚
+        </div>
+        <div class="money-input">
+          <label for="5000">5000円</label>
+          <input id="5000" v-model="input_money.m5000" type="number" min="0" :max="left_money.m5000">
+          枚
+        </div>
+        <div class="money-input">
+          <label for="10000">10000円</label>
+          <input id="10000" v-model="input_money.m10000" type="number" min="0" :max="left_money.m10000">
+          枚
+        </div>
+        <div class="money-input">
+          <label for="e-money">電子マネー</label>
+          <input id="e-money" type="checkbox" v-model="input_money.e_money">
+        </div>
+        <div class="money-input">
+          <button type="button" @click="buy">購入</button>
+        </div>
+      </form>
+    </div>
+    <div class="left_money">
+      <h2>所持金</h2>
+      <ul>
+        <li>10円 {{subbed_money('m10')}} 枚</li>
+        <li>50円 {{subbed_money('m50')}} 枚</li>
+        <li>100円 {{subbed_money('m100')}} 枚</li>
+        <li>500円 {{subbed_money('m500')}} 枚</li>
+        <li>1000円 {{subbed_money('m1000')}} 枚</li>
+        <li>5000円 {{subbed_money('m5000')}} 枚</li>
+        <li>10000円 {{subbed_money('m10000')}} 枚</li>
+        <li>電子マネー残高 {{subbed_money('e_money')}}円</li>
+      </ul>
+    </div>
+  </div>
+  <script>
+    var app = new Vue({
+      el: '#content',
+      data: {
+        input_money: {
+          m10: 0,
+          m50: 0,
+          m100: 0,
+          m500: 0,
+          m1000: 0,
+          m5000: 0,
+          m10000: 0,
+          e_money: false
+        },
+        left_money: {
+          m10: 15,
+          m50: 3,
+          m100: 2,
+          m500: 1,
+          m1000: 1,
+          m5000: 1,
+          m10000: 1,
+          e_money: 1000,
+        }
+      },
+      computed: {
+        subbed_money: function () {
+          return key => {
+            if (key === 'e_money') {
+              return this.left_money.e_money;
+            }
+            return this.left_money[key] - this.input_money[key];
+          }
+        }
+      },
+      methods: {
+        buy: function () {
+          let params = Object.keys(this.input_money).map(m => {
+            if (m === 'e_money') {
+              if (this.input_money[m] === true) {
+                return `${m}=${this.left_money[m]}`;
+              }
+              return null;
+            }
+            return `${m}=${this.input_money[m]}`;
+          }).filter(m => m !== null);
+          let query = '?' + params.join('&');
+          console.log(params);
+          axios.get('http://localhost:8080' + query)
+            .then(function (res) {
+              console.log(res.data);
+            });
+        }
+      }
+    })
+  </script>
+</body>
+</html>

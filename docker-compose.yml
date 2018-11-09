@@ -1,0 +1,18 @@
+version: '3'
+services:
+    php:
+        image: php:7.2-cli-stretch
+        ports:
+            - "8080:8080"
+        volumes:
+            - ./php:/code
+        command: /code/setup.sh
+    nginx:
+        build: nginx
+        ports:
+            - "8888:80"
+        volumes:
+            - ./nginx:/code
+        depends_on:
+            - php
+
