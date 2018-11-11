@@ -39,7 +39,7 @@
             v-model="item.value"
             :type="item.type"
             min="0"
-            :max="getMax(item.name)"
+            :max="getLeft(item.name).value"
             :disabled="disabled(item.name)">
         </div>
         <div class="money-input">
@@ -82,24 +82,23 @@
           {name: 'm10000',  value: 1   , value_suf: '枚'},
           {name: 'e_money', value: 1000, value_suf: '円'},
         ],
-        result_str: 'ここにお釣りが表示されます。'
-      },
-      computed: {
-        labelName: function () {
-          return type => {
-            let m = type.match(/m([1-9][0-9]{1,4})/);
-            if (m === null) {
-              let em = type.match(/e_money/);
-              if (em !== null) return '電子マネー'
-              return 'エラー';
-            }
-            return m[1] + '円';
-          }
-        }
+        result_str: 'ここに購入結果が表示されます。'
       },
       methods: {
-        getMax: function (name) {
-          return this.left_money.filter(m => m.name === name)[0].value;
+        labelName: function (type) {
+          let m = type.match(/m([1-9][0-9]{1,4})/);
+          if (m === null) {
+            if (type === 'e_money') return '電子マネー'
+            alert('エラー');
+            return `エラー: type = ${type}`;
+          }
+          return m[1] + '円';
+        },
+        getLeft: function (name) {
+          return this.left_money.filter(m => m.name === name)[0];
+        },
+        getInput: function (name) {
+          return this.input_money.filter(m => m.name === name)[0];
         },
         buy: function () {
           let params = this.input_money
@@ -107,42 +106,58 @@
             .map(m => {
               if (m.name === 'e_money') {
                 if (m.value === true) {
-                  let e_money = this.left_money.filter(m => m.name === 'e_money')[0].value;
+                  let e_money = this.getLeft('e_money').value;
                   return `${m.name}=${e_money}`;
                 }
                 return null;
               }
-              let money = this.left_money.filter(l => l.name === m.name)[0];
-              money.value -= m.value;
-              let pname  = m.name,
-                  pvalue = m.value;
-              m.value = 0;
-              return `${pname}=${pvalue}`;
+              return `${m.name}=${m.value}`;
           }).filter(m => m !== null);
           let query = '?' + params.join('&');
           console.log(params);
-          let self = this;
           axios.get('http://localhost:8888/index.php' + query)
-            .then(function (res) {
+            .then(res => {
               console.log(res.data);
-              let result_str = "<h2>お釣り</h2>";
+              let result_str = "<h2>結果</h2>";
+              this.input_money.filter(m => m.value != 0)
+                .forEach(m => {
+                  if (m.name === 'e_money') {
+                    let left = this.getLeft(m.name).value;
+                    result_str += `<li>${left}円チャージされた${this.labelName(m.name)}を投入しました。</li>`;
+                    return;
+                  }
+                result_str += `<li>${this.labelName(m.name)}を${m.value}枚投入しました。</li>`;
+              });
+              result_str += '<li>お釣りは、</li>';
               for (i in res.data) {
                 let key = '';
                 let m = i.match(/m([1-9][0-9]{1,4})/);
                 if (m === null) {
                   if (i === 'e_money') {
-                    let e_money = self.left_money.filter(m => m.name === 'e_money')[0];
+                    let e_money = this.getLeft(i);
                     e_money.value = res.data[i];
-                    result_str += `<p>電子マネー残高は${res.data[i]}円</p>`;
+                    result_str += `<p>電子マネー残高${res.data[i]}円</p>`;
                     continue;
                   }
-                  alert('エラー。画面をリロードしてやり直してください');
+                  alert('エラー');
+                  this.result_str = `<h2>エラー: ${res.data.message}</h2>`;
+                  return;
                 }
-                let money = self.left_money.filter(m => m.name === i)[0];
+                let money = this.getLeft(i);
                 money.value += res.data[i];
                 result_str += `<li>${m[1]}円が${res.data[i]}枚</li>`
               }
-              self.result_str = result_str + '<p>でした。</p>';
+              this.input_money.filter(m => m.name !== 'e_money')
+                .forEach(m => {
+                  let left = this.getLeft(m.name);
+                  left.value -= m.value;
+                  m.value = 0;
+                });
+              if (res.data.length == 0) {
+                this.result_str = result_str + '<li>ありませんでした。</li>';
+                return;
+              }
+              this.result_str = result_str + '<li>でした。</li>';
             });
         },
         // どれか一つの金種を選んだら他を選択できなくする
@@ -153,7 +168,7 @@
               someTypeIsSelected = true;
             }
           });
-          let money = this.input_money.filter(m => m.name === input)[0].value;
+          let money = this.getInput(input).value;
           return money == 0 && someTypeIsSelected;
         }
       }
