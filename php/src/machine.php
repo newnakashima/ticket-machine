@@ -27,7 +27,7 @@ class TicketMachine {
     public $returnMoney = [];
 
     // 金種受取り
-    function input($input) {
+    public function input($input) {
         foreach($input as $key => $value) {
             if (preg_match('/m[1-9][0-9]{1,4}/', $key)) {
                 $this->inputMoney[$key] = $value;
@@ -108,3 +108,4 @@ JSON;
         }
     }
 }
+
