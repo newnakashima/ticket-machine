@@ -34,4 +34,4 @@ jobs:
       #     key: v1-dependencies-{{ checksum "composer.json" }}
         
       # run tests!
-      - run: php php/code/test/test.php
+      - run: php php/test/test.php
