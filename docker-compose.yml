@@ -1,12 +1,9 @@
 version: '3'
 services:
     php:
-        image: php:7.2-cli-stretch
-        ports:
-            - "8080:8080"
+        image: php:7.2-fpm
         volumes:
             - ./php:/code
-        command: /code/setup.sh
     nginx:
         build: nginx
         ports:

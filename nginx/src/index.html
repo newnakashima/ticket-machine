@@ -122,7 +122,7 @@
           let query = '?' + params.join('&');
           console.log(params);
           let self = this;
-          axios.get('http://localhost:8080' + query)
+          axios.get('http://localhost:8888/index.php' + query)
             .then(function (res) {
               console.log(res.data);
               let result_str = "<h2>お釣り</h2>";
